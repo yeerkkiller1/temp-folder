@@ -51,7 +51,7 @@ function statPromise(path: string): Promise<Stats> {
 }
 
 export async function tempFolderDir(): Promise<string> {
-    let path = os.tmpdir() + "/temp-file/";
+    let path = os.tmpdir().replace(/\\/g, "/") + "/temp-file/";
     try {
         await mkdirPromise(path);
     } catch(e) { }
@@ -63,7 +63,7 @@ export async function getTempFolderPath(): Promise<string> {
     let path = await tempFolderDir();
     path = path + (await createTempFolderName());
     await mkdirPromise(path);
-    return path;
+    return path + "/";
 }
 
 const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
