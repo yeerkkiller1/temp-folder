@@ -58,7 +58,7 @@ function checkWatchedFolders() {
         try {
             console.log(`Starting check folders loop`);
             while(true) {
-                console.log(`Checking folders`);
+                console.log(`Checking folders, count: ${Object.keys(watchedFolders).length}`);
                 let checkTime = +new Date();
 
                 let tempFolder = await tempFolderDir();
@@ -81,7 +81,7 @@ function checkWatchedFolders() {
                     console.log(`Checking temporary folders for process existence took a long time. ${~~(checkTime / 1000)} seconds.`);
                 }
 
-                await SetTimeoutAsync(checkFolderDelay)
+                await SetTimeoutAsync(checkFolderDelay);
             }
         } catch(e) {
             console.error(`Watchdog loop died. This isn't good. Killing process`, e);
@@ -126,11 +126,10 @@ async function deleteIfProcessGone(folderName: string): Promise<void> {
                     resolve();
                 });
         });
+        delete watchedFolders[folderName];
     } else {
         console.log(`Folder still exists ${folderName}`);
     }
-
-    delete watchedFolders[folderName];
 }
 
 let infoChannel = GetInfoChannel();
@@ -142,8 +141,13 @@ async function doesProcessExist(folderName: string): Promise<boolean> {
         info = await infoChannel(folderInfo.pid);
     }
     catch(e) {
+        console.log(`folder being deleted, because of error when getting process id. ${folderName}, ${folderInfo.pid}, ${String(e)}`);
         return false;
     }
 
-    return folderInfo.startTime == info.StartTime;
+    if(+folderInfo.startTime !== +info.StartTime) {
+        console.log(`folder being deleted, because StartTime is different. ${folderName}, ${folderInfo.pid}, Folder: ${+folderInfo.startTime}, Process: ${+info.StartTime}`);
+        return false;
+    }
+    return true;
 }

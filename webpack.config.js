@@ -44,9 +44,7 @@ function getConfig (env) {
             new Visualizer(),
         ],
 
-        node: {
-            __dirname: false
-        },
+        node: { __dirname: false },
 
         resolveLoader: {
             modules: ['node_modules']

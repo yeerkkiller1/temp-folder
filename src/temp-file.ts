@@ -1,7 +1,7 @@
 import { GetInfo } from "p-info";
 import { Range, SetTimeoutAsync } from "pchannel";
 import * as os from "os";
-import { exists, mkdir, stat, writeFile, readFile } from "fs";
+import { exists, mkdir, stat, writeFile, readFile, watch } from "fs";
 import { execFile, exec, spawn } from "child_process";
 
 let currentProcessInfo = GetInfo(process.pid);
@@ -103,19 +103,34 @@ export function ensureWatchdogExists(): void {
     (async () => {
         try {
             if(!await doesWatchdogExist()) {
-                let watchdogPath = __dirname + "/watchdog.js";
-                
-                //execPromise(`start cmd /c "node ${watchdogPath}"`);
-                ///*
-                var child = spawn(`node`, [watchdogPath], {detached: true, stdio: [ "ignore", "ignore", "ignore" ], windowsHide: true } as any);
-                child.unref();
-                //*/
-                console.log(`Spawned new watchdog`);
+                nativeRequire("temp-folder")["_internal_startWatchdog"]();
             }
         } catch(e) {
             console.error(`Ensure watchdog exists check failed.`, e);
         }
     })();
+}
+function nativeRequire(name: string) {
+    return eval(`require("${name}")`);
+}
+export function _internal_startWatchdog() {
+    let watchdogPath = __dirname + "/watchdog.js";
+    // This has to be in a variable, or else webpack inlines the result
+    let isDirnameMessedup = !__dirname || __dirname === "/";
+    if(isDirnameMessedup) {
+        console.log(`__dirname is not defined (or /). Set add { node: __dirname: false } to your webpack configuration. __dirname: ${__dirname}`);
+    }
+    
+    //execPromise(`start cmd /c "node ${watchdogPath}"`);
+
+    //*
+    let watchdogOutput = os.tmpdir() + "/watchdog_output.txt";
+
+    var child = spawn(`node`, [watchdogPath], {detached: true, stdio: [ "ignore", "ignore", "ignore" ], windowsHide: true } as any);
+    child.unref();
+    //*/
+
+    console.log(`Spawned new watchdog on path ${watchdogPath}`);
 }
 async function doesWatchdogExist(): Promise<boolean> {
     // Launch watchdog if it doesn't exist.
@@ -123,10 +138,17 @@ async function doesWatchdogExist(): Promise<boolean> {
     try {
         watchdogStats = await statPromise(watchdogMarkFile);
     } catch(e) {
-        watchdogStats = null;
+        console.log(`Watchdog doesn't exist because of stat error`, e);
+        return false;
+    }
+    
+    let watchdogAge = +new Date() - (watchdogStats as any).mtimeMs;
+    if(watchdogAge > watchdogStaleTime) {
+        console.log(`Watchdog doesn't exist because of age ${watchdogAge/1000} seconds`);
+        return false;
     }
 
-    return watchdogStats !== null && +new Date() - (watchdogStats as any).mtimeMs < watchdogStaleTime;
+    return true;
 }
 
 function startWatchdogHeartbeatLoop(): void {
@@ -135,10 +157,12 @@ function startWatchdogHeartbeatLoop(): void {
             while(true) {
                 let currentMark = getProcessRandomIdentifier();
                 try {
-                    currentMark = await readFilePromise(watchdogMarkFile)
+                    currentMark = await readFilePromise(watchdogMarkFile);
+                    console.log("Read heartbeat file");
                 } catch(e) { }
                 if(currentMark !== getProcessRandomIdentifier()) {
-                    throw new Error(`Another watchdog appears to exist, so we are closing`);
+                    console.error(`Another watchdog appears to exist, so we are closing`);
+                    process.exit();
                 }
                 // Update our mark, so the file time is recent enough to prove we are living.
                 await writeFilePromise(watchdogMarkFile, currentMark);
