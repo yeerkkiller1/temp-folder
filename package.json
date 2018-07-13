@@ -1,6 +1,33 @@
 {
+  "scripts": {
+    "start": "bash watch.sh"
+  },
   "name": "temp-folder",
-  "version": "0.0.1",
-  "main": "index.js",
-  "license": "MIT"
+  "version": "0.1.0",
+  "main": "./dist/temp-folder.js",
+  "types": "./dist/temp-folder.d.ts",
+  "author": "yeerkkiller1 <yeerkkiller1@gmail.com>",
+  "license": "MIT",
+  "description": "Another promise channel/stream library",
+  "repository": {
+    "url": "https://github.com/yeerkkiller1/temp-folder"
+  },
+  "devDependencies": {
+    "@types/jasmine": "^2.8.7",
+    "@types/node": "^7.0.12",
+    "clean-typings-file": "^0.1.7",
+    "jasmine": "^3.1.0",
+    "run-when-changed": "^2.1.0",
+    "source-map-loader": "^0.2.3",
+    "ts-loader": "^4.4.1",
+    "typescript": "^2.9.2",
+    "webpack": "^4.12.1",
+    "webpack-cli": "^3.0.8",
+    "webpack-dev-server": "^2.9.4",
+    "webpack-visualizer-plugin": "^0.1.11"
+  },
+  "dependencies": {
+    "p-info": "^0.1.1",
+    "pchannel": "^0.3.4"
+  }
 }
