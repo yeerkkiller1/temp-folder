@@ -62,7 +62,9 @@ export async function tempFolderDir(): Promise<string> {
 export async function getTempFolderPath(): Promise<string> {
     let path = await tempFolderDir();
     path = path + (await createTempFolderName());
-    await mkdirPromise(path);
+    try {
+        await mkdirPromise(path);
+    } catch(e) {}
     return path + "/";
 }
 
