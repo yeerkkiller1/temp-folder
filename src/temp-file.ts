@@ -1,7 +1,7 @@
 import { GetInfo } from "p-info";
 import { Range, SetTimeoutAsync } from "pchannel";
 import * as os from "os";
-import { exists, mkdir, stat, writeFile, readFile, watch } from "fs";
+import { exists, mkdir, stat, writeFile, readFile, watch, unlink } from "fs";
 import { execFile, exec, spawn } from "child_process";
 
 let currentProcessInfo = GetInfo(process.pid);
@@ -46,6 +46,14 @@ function statPromise(path: string): Promise<Stats> {
     return new Promise<Stats>((resolve, reject) => {
         stat(path, (err, stats) => {
             err ? reject(err) : resolve(stats);
+        });
+    });
+}
+
+function unlinkPromise(path: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        unlink(path, (err) => {
+            err ? reject(err) : resolve();
         });
     });
 }
@@ -123,7 +131,7 @@ export function _internal_startWatchdog() {
         console.log(`__dirname is not defined (or /). Set add { node: __dirname: false } to your webpack configuration. __dirname: ${__dirname}`);
     }
     
-    //execPromise(`start cmd /c "node ${watchdogPath}"`);
+    //execPromise(`start cmd /c "node ${watchdogPath} && pause"`);
 
     //*
     let watchdogOutput = os.tmpdir() + "/watchdog_output.txt";
@@ -156,18 +164,21 @@ async function doesWatchdogExist(): Promise<boolean> {
 function startWatchdogHeartbeatLoop(): void {
     (async () => {
         try {
+            let currentMark = getProcessRandomIdentifier();
             while(true) {
-                let currentMark = getProcessRandomIdentifier();
+                // Update our mark, so the file time is recent enough to prove we are living.
+                await writeFilePromise(watchdogMarkFile, currentMark);
+
                 try {
                     currentMark = await readFilePromise(watchdogMarkFile);
                     console.log("Read heartbeat file");
                 } catch(e) { }
+
                 if(currentMark !== getProcessRandomIdentifier()) {
-                    console.error(`Another watchdog appears to exist, so we are closing`);
+                    console.error(`Another watchdog appears to exist, so we are closing. We read back ${currentMark}, when our mark is ${getProcessRandomIdentifier()}`);
                     process.exit();
                 }
-                // Update our mark, so the file time is recent enough to prove we are living.
-                await writeFilePromise(watchdogMarkFile, currentMark);
+                
                 await SetTimeoutAsync(watchdogWriteTime);
             }
         } catch(e) {
