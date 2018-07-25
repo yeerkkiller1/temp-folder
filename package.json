@@ -3,7 +3,7 @@
     "start": "bash watch.sh"
   },
   "name": "temp-folder",
-  "version": "0.2.15",
+  "version": "0.2.16",
   "main": "./dist/temp-folder.js",
   "types": "./dist/temp-folder.d.ts",
   "author": "yeerkkiller1 <yeerkkiller1@gmail.com>",

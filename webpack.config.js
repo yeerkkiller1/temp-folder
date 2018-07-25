@@ -28,6 +28,11 @@ function getConfig (env) {
             extensions: [".webpack.js", ".web.js", ".ts", ".tsx", ".js"]
         },
 
+        externals: {
+            "pchannel": "pchannel",
+            "p-info": "p-info"
+        },
+
         module: {
             rules: [
                 // All files with a '.ts' or '.tsx' extension will be handled by 'ts-loader'.
