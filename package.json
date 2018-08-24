@@ -3,7 +3,7 @@
     "start": "bash watch.sh"
   },
   "name": "temp-folder",
-  "version": "0.2.17",
+  "version": "0.3.0",
   "main": "./dist/temp-folder.js",
   "types": "./dist/temp-folder.d.ts",
   "author": "yeerkkiller1 <yeerkkiller1@gmail.com>",
@@ -27,7 +27,7 @@
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "dependencies": {
-    "p-info": "^0.1.15",
+    "p-info": "^0.2.2",
     "pchannel": "^0.3.4"
   }
 }
